@@ -1,0 +1,28 @@
+<svg width="195" height="56" viewBox="0 0 195 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="195" height="56" rx="8" fill="url(#paint0_linear_custom)"/>
+<rect x="1.05" y="1.05" width="192.9" height="53.9" rx="6.95" stroke="white" stroke-opacity="0.15" stroke-width="2.1"/>
+${icon_group}
+<g filter="url(#filter0_d_custom)">
+<text transform="translate(${text_left} ${title_y})" fill="${title_color}" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" font-weight="500" letter-spacing="0em"><tspan x="0" y="15.3182">${title}</tspan></text>
+${subtitle_line}
+</g>
+<defs>
+<filter id="filter0_d_custom" x="54.4" y="3.9" width="134.2" height="48.2" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="2.8"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_custom"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_custom" result="shape"/>
+</filter>
+<linearGradient id="paint0_linear_custom" x1="97.5" y1="0" x2="97.5" y2="56" gradientUnits="userSpaceOnUse">
+<stop stop-color="${start_color}"/>
+<stop offset="1" stop-color="${end_color}"/>
+</linearGradient>
+<clipPath id="clip0_custom">
+<rect width="40" height="40" fill="white" transform="translate(12 8)"/>
+</clipPath>
+</defs>
+</svg>

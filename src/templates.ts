@@ -1,4 +1,5 @@
 import curseforgeDownloads from "../template/curseforge-downloads.svg";
+import custom from "../template/custom.svg";
 import githubCi from "../template/github-ci.svg";
 import githubDownloads from "../template/github-downloads.svg";
 import modrinthDownloads from "../template/modrinth-downloads.svg";
@@ -7,6 +8,7 @@ import { INTER_ASCII_WIDTHS } from "./font-metrics";
 /** All available badge templates, imported as raw text via Wrangler's Text module rule. */
 export const templates = {
   curseforgeDownloads,
+  custom,
   githubCi,
   githubDownloads,
   modrinthDownloads,
@@ -27,13 +29,20 @@ export function escapeXml(value: string): string {
 
 /**
  * Replace every `${key}` placeholder in a template with the given values.
- * All values are XML-escaped before substitution. Unknown placeholders are
- * left untouched so a typo fails loudly in the rendered output.
+ * Values are XML-escaped before substitution, except keys listed in `rawKeys`,
+ * which are inserted verbatim — reserve those for markup constructed by the
+ * worker itself (never for user input). Unknown placeholders are left
+ * untouched so a typo fails loudly in the rendered output.
  */
-export function render(template: string, vars: Record<string, string>): string {
+export function render(
+  template: string,
+  vars: Record<string, string>,
+  rawKeys: readonly string[] = [],
+): string {
   return template.replace(/\$\{(\w+)\}/g, (original, key: string) => {
     const value = vars[key];
-    return value === undefined ? original : escapeXml(value);
+    if (value === undefined) return original;
+    return rawKeys.includes(key) ? value : escapeXml(value);
   });
 }
 
