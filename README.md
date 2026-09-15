@@ -100,3 +100,7 @@ and deploys on every push to `main`. One-time setup:
 TypeScript (strict) · Cloudflare Workers + KV · Wrangler · zero runtime
 dependencies — SVGs are built by plain string templates, keeping CPU time far
 below the 10 ms free-tier limit.
+
+## License
+
+[AGPL-3.0-only](LICENSE)

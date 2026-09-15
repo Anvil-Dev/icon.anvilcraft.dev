@@ -2,6 +2,7 @@
   "name": "icon.anvilcraft.dev",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "description": "Dynamic SVG badges served from the Cloudflare edge: Modrinth / CurseForge / GitHub downloads and GitHub CI status.",
   "scripts": {

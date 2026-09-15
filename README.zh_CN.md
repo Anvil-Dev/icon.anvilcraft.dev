@@ -94,3 +94,7 @@ npm run typecheck  # TypeScript 严格模式类型检查
 
 TypeScript（strict）· Cloudflare Workers + KV · Wrangler · 零运行时依赖——
 SVG 由纯字符串模板构建，CPU 消耗远低于免费档 10ms 限制。
+
+## 开源协议
+
+[AGPL-3.0-only](LICENSE)
