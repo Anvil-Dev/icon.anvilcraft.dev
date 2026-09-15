@@ -17,7 +17,7 @@
 | Modrinth 下载量 | `https://icon.anvilcraft.dev/modrinth/downloads/:slug` | Modrinth API v2 | 3 小时 |
 | CurseForge 下载量 | `https://icon.anvilcraft.dev/curseforge/downloads/:slug` | cfwidget / CurseForge 官方 API | 3 小时 |
 | GitHub 下载量 | `https://icon.anvilcraft.dev/github/downloads/:owner/:repo` | GitHub REST（release 资产） | 3 小时 |
-| GitHub CI 状态 | `https://icon.anvilcraft.dev/github/ci/:owner/:repo/:workflow` | GitHub REST（workflow runs） | 60 秒 |
+| GitHub CI 状态 | `https://icon.anvilcraft.dev/github/workflow/:owner/:repo/:workflow` | GitHub REST（workflow runs） | 60 秒 |
 
 示例（AnvilCraft 项目）：
 
@@ -25,7 +25,7 @@
 ![Modrinth Downloads](https://icon.anvilcraft.dev/modrinth/downloads/AnvilCraft)
 ![CurseForge Downloads](https://icon.anvilcraft.dev/curseforge/downloads/AnvilCraft)
 ![GitHub Downloads](https://icon.anvilcraft.dev/github/downloads/Anvil-Dev/AnvilCraft)
-![CI Status](https://icon.anvilcraft.dev/github/ci/Anvil-Dev/AnvilCraft/ci.yml)
+![CI Status](https://icon.anvilcraft.dev/github/workflow/Anvil-Dev/AnvilCraft/ci.yml)
 ```
 
 所有端点都返回 `image/svg+xml`，并附带与缓存 TTL 一致的 `Cache-Control`

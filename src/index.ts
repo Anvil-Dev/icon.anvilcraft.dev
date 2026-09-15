@@ -14,7 +14,7 @@ Endpoints:
   /modrinth/downloads/:slug            Modrinth downloads badge   (cached 3h)
   /curseforge/downloads/:slug          CurseForge downloads badge (cached 3h)
   /github/downloads/:owner/:repo       GitHub release downloads   (cached 3h)
-  /github/ci/:owner/:repo/:workflow    GitHub Actions CI status   (cached 60s)
+  /github/workflow/:owner/:repo/:workflow    GitHub Actions CI status   (cached 60s)
 
 Example: /github/downloads/Anvil-Dev/AnvilCraft
 `;
@@ -59,7 +59,7 @@ export default {
       });
     }
 
-    if (kind === "ci" && provider === "github" && params.length === 3) {
+    if (kind === "workflow" && provider === "github" && params.length === 3) {
       const [owner, repo, workflow] = params;
       return ciBadge(env, ctx, owner, repo, workflow);
     }
@@ -107,7 +107,7 @@ async function ciBadge(
   repo: string,
   workflow: string,
 ): Promise<Response> {
-  const cacheKey = `github:ci:${owner}/${repo}/${workflow}`;
+  const cacheKey = `github:workflow:${owner}/${repo}/${workflow}`;
   let status = await readCache<CiStatus>(env.ICON_CACHE, cacheKey);
 
   if (status === null) {
