@@ -18,6 +18,7 @@ Request a badge URL and embed the SVG anywhere an image can go (Markdown, HTML, 
 | CurseForge downloads | `https://icon.anvilcraft.dev/curseforge/downloads/:slug` | cfwidget / official CurseForge API | 3 hours |
 | GitHub downloads | `https://icon.anvilcraft.dev/github/downloads/:owner/:repo` | GitHub REST (release assets) | 3 hours |
 | GitHub CI status | `https://icon.anvilcraft.dev/github/workflow/:owner/:repo/:workflow` | GitHub REST (workflow runs) | 60 seconds |
+| Custom badge | `https://icon.anvilcraft.dev/custom?title=...&subtitle=...&icon=...` | [simpleicons.org](https://simpleicons.org) | 24 hours |
 
 Examples (the AnvilCraft project):
 
@@ -27,6 +28,27 @@ Examples (the AnvilCraft project):
 ![GitHub Downloads](https://icon.anvilcraft.dev/github/downloads/Anvil-Dev/AnvilCraft)
 ![CI Status](https://icon.anvilcraft.dev/github/workflow/Anvil-Dev/AnvilCraft/ci.yml)
 ```
+
+### Custom badges
+
+`/custom` renders a fully parameterized badge (no upstream account data):
+
+```markdown
+![License](https://icon.anvilcraft.dev/custom?title=Licensed%20By&subtitle=GPL%20v3&titleColor=E8E8E8&subtitleColor=BD0000&startColor=3A0101&endColor=170000&icon=gplv3&iconColor=BD0000)
+```
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `title` | ✅ | Title text (16px, ≤64 chars) |
+| `subtitle` | | Subtitle text (17px bold); the title is vertically centered when omitted |
+| `titleColor` | | Title color, `RRGGBB` or `RGB` (default `E8E8E8`) |
+| `subtitleColor` | | Subtitle color (default `FFFFFF`) |
+| `startColor` / `endColor` | | Background gradient top/bottom colors (defaults `202020` / `000000`) |
+| `icon` | | [simple-icons](https://simpleicons.org) slug, e.g. `gplv3` (omit for no icon) |
+| `iconColor` | | Icon color; defaults to the icon's official brand color |
+
+Invalid parameters (missing `title`, malformed colors, unknown icon slugs)
+return a `400` error.
 
 All endpoints return `image/svg+xml` with a `Cache-Control` header matching the
 cache TTL. If the upstream API fails and no cached value exists, the badge is

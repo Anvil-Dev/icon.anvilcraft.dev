@@ -18,6 +18,7 @@
 | CurseForge 下载量 | `https://icon.anvilcraft.dev/curseforge/downloads/:slug` | cfwidget / CurseForge 官方 API | 3 小时 |
 | GitHub 下载量 | `https://icon.anvilcraft.dev/github/downloads/:owner/:repo` | GitHub REST（release 资产） | 3 小时 |
 | GitHub CI 状态 | `https://icon.anvilcraft.dev/github/workflow/:owner/:repo/:workflow` | GitHub REST（workflow runs） | 60 秒 |
+| 自定义徽章 | `https://icon.anvilcraft.dev/custom?title=...&subtitle=...&icon=...` | [simpleicons.org](https://simpleicons.org) | 24 小时 |
 
 示例（AnvilCraft 项目）：
 
@@ -27,6 +28,26 @@
 ![GitHub Downloads](https://icon.anvilcraft.dev/github/downloads/Anvil-Dev/AnvilCraft)
 ![CI Status](https://icon.anvilcraft.dev/github/workflow/Anvil-Dev/AnvilCraft/ci.yml)
 ```
+
+### 自定义徽章
+
+`/custom` 渲染完全由参数决定的徽章（不依赖任何上游账户数据）：
+
+```markdown
+![License](https://icon.anvilcraft.dev/custom?title=Licensed%20By&subtitle=GPL%20v3&titleColor=E8E8E8&subtitleColor=BD0000&startColor=3A0101&endColor=170000&icon=gplv3&iconColor=BD0000)
+```
+
+| 参数 | 必填 | 说明 |
+| --- | --- | --- |
+| `title` | ✅ | 标题文本（16px，≤64 字符） |
+| `subtitle` | | 副标题文本（17px 粗体）；缺省时标题垂直居中 |
+| `titleColor` | | 标题颜色，`RRGGBB` 或 `RGB`（默认 `E8E8E8`） |
+| `subtitleColor` | | 副标题颜色（默认 `FFFFFF`） |
+| `startColor` / `endColor` | | 背景渐变顶/底颜色（默认 `202020` / `000000`） |
+| `icon` | | [simple-icons](https://simpleicons.org) 的 slug，如 `gplv3`（缺省则无图标） |
+| `iconColor` | | 图标颜色；缺省时回退为该图标的官方品牌色 |
+
+参数非法（缺 `title`、颜色格式错误、图标 slug 不存在）时返回 `400` 错误。
 
 所有端点都返回 `image/svg+xml`，并附带与缓存 TTL 一致的 `Cache-Control`
 响应头。当上游 API 失败且没有缓存值时，徽章仍会正常渲染（显示 `N/A` /
