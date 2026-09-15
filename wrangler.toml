@@ -1,0 +1,15 @@
+name = "icon-anvilcraft-dev"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+
+# Import the SVG badge templates as text modules.
+rules = [{ type = "Text", globs = ["template/*.svg"] }]
+
+# Custom domain. Make sure the DNS of icon.anvilcraft.dev is managed by Cloudflare.
+routes = [{ pattern = "icon.anvilcraft.dev", custom_domain = true }]
+
+# KV cache namespace. Replace `id` with the output of:
+#   npx wrangler kv namespace create ICON_CACHE
+[[kv_namespaces]]
+binding = "ICON_CACHE"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"

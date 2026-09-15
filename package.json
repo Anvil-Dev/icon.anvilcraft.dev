@@ -1,0 +1,17 @@
+{
+  "name": "icon.anvilcraft.dev",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Dynamic SVG badges served from the Cloudflare edge: Modrinth / CurseForge / GitHub downloads and GitHub CI status.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250617.0",
+    "typescript": "^5.5.4",
+    "wrangler": "^4.20.0"
+  }
+}

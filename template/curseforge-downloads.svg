@@ -1,0 +1,25 @@
+<svg width="251" height="56" viewBox="0 0 251 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="251" height="56" rx="8" fill="url(#paint0_linear_36_30)"/>
+<rect x="1.05" y="1.05" width="248.9" height="53.9" rx="6.95" stroke="white" stroke-opacity="0.15" stroke-width="2.1"/>
+<path d="M42.5432 23.3372C42.5432 23.3372 50.7101 22.0441 52 18.2718H39.489V15.2785H12L15.3863 19.2249V23.2682C15.3863 23.2682 23.9308 22.822 27.236 25.3391C31.7601 29.5506 22.1475 35.2434 22.1475 35.2434L20.4992 40.7215C23.0768 38.2566 27.9894 35.0679 36.9965 35.2215C33.5689 36.3094 30.1224 38.0088 27.4392 40.7215H45.6471L43.9325 35.2434C43.9325 35.2434 30.7359 27.4283 42.5432 23.3379V23.3372Z" fill="#F16436"/>
+<g filter="url(#filter0_d_36_30)">
+<text transform="translate(60 9.5)" fill="#E8E8E8" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" font-weight="500" letter-spacing="0em"><tspan x="0" y="15.3182">CurseForge Downloads</tspan></text>
+<text transform="translate(60 28.5)" fill="#F16436" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="17" font-weight="800" letter-spacing="0em"><tspan x="0" y="15.1818">${downloads}</tspan></text>
+</g>
+<defs>
+<filter id="filter0_d_36_30" x="54.4" y="3.9" width="190.2" height="48.2" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="2.8"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_36_30"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_36_30" result="shape"/>
+</filter>
+<linearGradient id="paint0_linear_36_30" x1="125.5" y1="0" x2="125.5" y2="56" gradientUnits="userSpaceOnUse">
+<stop stop-color="#2C130B"/>
+<stop offset="1" stop-color="#210D08"/>
+</linearGradient>
+</defs>
+</svg>
