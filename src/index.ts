@@ -3,7 +3,7 @@ import type { CiStatus, Env } from "./env";
 import * as curseforge from "./providers/curseforge";
 import * as github from "./providers/github";
 import * as modrinth from "./providers/modrinth";
-import { formatNumber, render, templates } from "./templates";
+import { estimateTextWidth, formatNumber, render, templates, templateWidth, withWidth } from "./templates";
 
 /** Route parameters are restricted to characters safe for upstream APIs and XML output. */
 const PARAM_RE = /^[A-Za-z0-9._-]+$/;
@@ -116,26 +116,32 @@ async function ciBadge(
       ctx.waitUntil(writeCache(env.ICON_CACHE, cacheKey, status, CI_TTL));
     } catch (error) {
       console.error(cacheKey, error);
-      status = { name: workflow, status: "unknown", color: "#9F9F9F" };
-      return svgResponse(
-        render(templates.githubCi, {
-          Name: status.name,
-          Status: status.status,
-          status_color: status.color,
-        }),
-        0,
-      );
+      return svgResponse(renderCi({ name: workflow, status: "unknown", color: "#9F9F9F" }), 0);
     }
   }
 
-  return svgResponse(
-    render(templates.githubCi, {
-      Name: status.name,
-      Status: status.status,
-      status_color: status.color,
-    }),
-    CI_TTL,
-  );
+  return svgResponse(renderCi(status), CI_TTL);
+}
+
+/** X offset of the text block inside the CI template, and the right padding. */
+const CI_TEXT_LEFT = 60;
+const CI_PADDING_RIGHT = 16;
+
+/**
+ * Render the CI badge, widening the card when the workflow display name (or
+ * the status text) would overflow the template's default width.
+ */
+function renderCi(status: CiStatus): string {
+  const titleWidth = estimateTextWidth(status.name, 16);
+  const statusWidth = estimateTextWidth(status.status, 17, true);
+  const needed = Math.ceil(CI_TEXT_LEFT + Math.max(titleWidth, statusWidth) + CI_PADDING_RIGHT);
+  const base = templateWidth(templates.githubCi) ?? needed;
+  const template = withWidth(templates.githubCi, Math.max(base, needed));
+  return render(template, {
+    Name: status.name,
+    Status: status.status,
+    status_color: status.color,
+  });
 }
 
 function svgResponse(svg: string, maxAge: number): Response {
