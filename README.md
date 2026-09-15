@@ -103,4 +103,9 @@ below the 10 ms free-tier limit.
 
 ## License
 
-[AGPL-3.0-only](LICENSE)
+Code: [AGPL-3.0-only](LICENSE)
+
+The badge designs in [`template/`](template/) are derived from
+[devins-badges](https://github.com/intergrav/devins-badges), which is
+released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/)
+(see [`template/NOTICE`](template/NOTICE)).

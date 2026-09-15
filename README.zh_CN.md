@@ -97,4 +97,9 @@ SVG 由纯字符串模板构建，CPU 消耗远低于免费档 10ms 限制。
 
 ## 开源协议
 
-[AGPL-3.0-only](LICENSE)
+代码：[AGPL-3.0-only](LICENSE)
+
+[`template/`](template/) 中的徽章设计源自
+[devins-badges](https://github.com/intergrav/devins-badges)，该项目以
+[CC0](https://creativecommons.org/publicdomain/zero/1.0/deed.zh-hans)
+协议开放（见 [`template/NOTICE`](template/NOTICE)）。
