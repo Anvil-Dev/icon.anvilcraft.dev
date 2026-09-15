@@ -278,7 +278,13 @@ function renderCustom(vars: CustomBadgeVars): string {
   const subtitleWidth = hasSubtitle ? measureTextWidth(vars.subtitle, 17, 800) : 0;
   const needed = Math.ceil(textLeft + Math.max(titleWidth, subtitleWidth) + CUSTOM_PADDING_RIGHT);
   const base = templateWidth(templates.custom) ?? needed;
-  const template = withWidth(templates.custom, Math.max(base, needed));
+  const finalWidth = Math.max(base, needed);
+  const template = withWidth(templates.custom, finalWidth);
+
+  // The drop-shadow filter region must start slightly left of the text block;
+  // a fixed region would clip icon-less badges whose text starts at x=16.
+  const filterX = textLeft - 5.6;
+  const filterWidth = finalWidth - filterX - 6.4;
 
   const subtitleLine = hasSubtitle
     ? `<text transform="translate(${textLeft} 28.5)" fill="#${vars.subtitleColor}" ` +
@@ -297,6 +303,8 @@ function renderCustom(vars: CustomBadgeVars): string {
       subtitle_line: subtitleLine,
       start_color: `#${vars.startColor}`,
       end_color: `#${vars.endColor}`,
+      filter_x: String(Number(filterX.toFixed(2))),
+      filter_width: String(Number(filterWidth.toFixed(2))),
     },
     ["icon_group", "subtitle_line"],
   );
