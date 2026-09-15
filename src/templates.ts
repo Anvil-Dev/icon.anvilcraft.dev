@@ -36,20 +36,10 @@ export function render(template: string, vars: Record<string, string>): string {
   });
 }
 
-/** Format a download counter compactly, e.g. 1234567 -> "1.23M", 12345 -> "12.3K". */
+/** Format a download counter with thousands separators, e.g. 134724 -> "134,724". */
 export function formatNumber(n: number): string {
   if (!Number.isFinite(n) || n < 0) return "N/A";
-  if (n >= 1_000_000) {
-    const v = n / 1_000_000;
-    return `${trimTrailingZeros(v >= 100 ? Math.round(v).toString() : v.toFixed(2))}M`;
-  }
-  if (n >= 1_000) {
-    const v = n / 1_000;
-    return `${trimTrailingZeros(v >= 100 ? Math.round(v).toString() : v.toFixed(1))}K`;
-  }
-  return Math.round(n).toString();
-}
-
-function trimTrailingZeros(s: string): string {
-  return s.includes(".") ? s.replace(/\.?0+$/, "") : s;
+  return Math.round(n)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
