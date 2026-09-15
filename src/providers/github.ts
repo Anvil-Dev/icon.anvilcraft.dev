@@ -25,8 +25,8 @@ async function githubFetch<T>(env: Env, path: string): Promise<T> {
     Accept: "application/vnd.github+json",
     "User-Agent": "icon.anvilcraft.dev",
   };
-  if (env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET) {
-    headers.Authorization = `Basic ${btoa(`${env.GITHUB_CLIENT_ID}:${env.GITHUB_CLIENT_SECRET}`)}`;
+  if (env.GH_CLIENT_ID && env.GH_CLIENT_SECRET) {
+    headers.Authorization = `Basic ${btoa(`${env.GH_CLIENT_ID}:${env.GH_CLIENT_SECRET}`)}`;
   }
   const res = await fetch(`${API_BASE}${path}`, { headers });
   if (!res.ok) {

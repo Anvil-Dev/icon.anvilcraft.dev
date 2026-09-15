@@ -40,8 +40,8 @@
 - 上游结果（下载计数或 CI 状态）按合适的 TTL 缓存在 **Cloudflare KV** 中，
   因此 Workers 免费额度（每日 10 万请求、10ms CPU）和 KV 免费额度绰绰有余，
   站点可以零成本运行。
-- 配置了 GitHub OAuth App 的**客户端凭证**（`GITHUB_CLIENT_ID` /
-  `GITHUB_CLIENT_SECRET` secret）后，GitHub 请求会携带 Basic 认证，针对公开
+- 配置了 GitHub OAuth App 的**客户端凭证**（`GH_CLIENT_ID` /
+  `GH_CLIENT_SECRET` secret）后，GitHub 请求会携带 Basic 认证，针对公开
   数据享有独立的每小时 5000 次配额，而不是共享的每小时 60 次未认证限额。未
   配置 secret 时回退为未认证请求，并由 KV 缓存兜底。
 - CurseForge 官方 API 没有免 key 通道：默认使用免费的
@@ -78,8 +78,8 @@ npm run typecheck  # TypeScript 严格模式类型检查
 3. **Cloudflare Worker secret**（可选，推荐）：
 
    ```bash
-   npx wrangler secret put GITHUB_CLIENT_ID       # GitHub OAuth App 的 client id
-   npx wrangler secret put GITHUB_CLIENT_SECRET   # GitHub OAuth App 的 client secret
+   npx wrangler secret put GH_CLIENT_ID       # GitHub OAuth App 的 client id
+   npx wrangler secret put GH_CLIENT_SECRET   # GitHub OAuth App 的 client secret
    npx wrangler secret put CURSEFORGE_API_KEY     # 可选的 CurseForge 官方 API key
    ```
 

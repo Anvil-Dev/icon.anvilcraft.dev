@@ -2,8 +2,8 @@
 export interface Env {
   ICON_CACHE: KVNamespace;
   /** Optional GitHub OAuth App credentials for a dedicated 5000 req/h rate limit on public data. */
-  GITHUB_CLIENT_ID?: string;
-  GITHUB_CLIENT_SECRET?: string;
+  GH_CLIENT_ID?: string;
+  GH_CLIENT_SECRET?: string;
   /** Optional CurseForge API key. Falls back to the free cfwidget API when absent. */
   CURSEFORGE_API_KEY?: string;
 }

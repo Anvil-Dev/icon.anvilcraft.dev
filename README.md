@@ -42,7 +42,7 @@ still rendered (showing `N/A` / `unknown`) so embedded images never break.
   (100,000 requests/day, 10 ms CPU) and the KV free tier are more than enough,
   and the site runs at zero cost.
 - GitHub requests are sent with an OAuth App's **client credentials**
-  (`GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` secrets) when configured, giving
+  (`GH_CLIENT_ID` / `GH_CLIENT_SECRET` secrets) when configured, giving
   a dedicated 5,000 requests/hour quota for public data instead of the shared
   60 requests/hour unauthenticated limit. Without the secrets the worker falls
   back to unauthenticated requests, absorbed by the KV cache.
@@ -81,8 +81,8 @@ and deploys on every push to `main`. One-time setup:
 3. **Cloudflare Worker secrets** (optional, recommended):
 
    ```bash
-   npx wrangler secret put GITHUB_CLIENT_ID       # GitHub OAuth App client id
-   npx wrangler secret put GITHUB_CLIENT_SECRET   # GitHub OAuth App client secret
+   npx wrangler secret put GH_CLIENT_ID       # GitHub OAuth App client id
+   npx wrangler secret put GH_CLIENT_SECRET   # GitHub OAuth App client secret
    npx wrangler secret put CURSEFORGE_API_KEY     # optional official CurseForge key
    ```
 

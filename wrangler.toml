@@ -12,4 +12,4 @@ routes = [{ pattern = "icon.anvilcraft.dev", custom_domain = true }]
 #   npx wrangler kv namespace create ICON_CACHE
 [[kv_namespaces]]
 binding = "ICON_CACHE"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "33569436b9b44abeb46263851669af1d"
