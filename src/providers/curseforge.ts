@@ -21,10 +21,12 @@ export async function getProjectDownloads(env: Env, slug: string): Promise<numbe
 
 async function cfwidgetDownloads(slug: string): Promise<number> {
   const res = await fetch(
-    `https://api.cfwidget.com/mc-mods/minecraft/mc-mods/${encodeURIComponent(slug)}`,
+    `https://api.cfwidget.com/minecraft/mc-mods/${encodeURIComponent(slug)}`,
     { headers: { "User-Agent": "icon.anvilcraft.dev" } },
   );
   if (!res.ok) {
+    // 202 means the project is being queued for processing; the next request
+    // (this response is served with no-cache) will usually find fresh data.
     throw new CurseForgeApiError(`cfwidget responded with HTTP ${res.status} for ${slug}`);
   }
   const data = (await res.json()) as CfWidgetProject;
