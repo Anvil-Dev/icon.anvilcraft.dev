@@ -6,7 +6,7 @@ compatibility_date = "2025-06-01"
 rules = [{ type = "Text", globs = ["**/*.svg"], fallthrough = true }]
 
 # Custom domain. Make sure the DNS of icon.anvilcraft.dev is managed by Cloudflare.
-routes = [{ pattern = "icon.anvilcraft.dev", custom_domain = true }]
+routes = [{ pattern = "*/*", zone_name = "modwiki.dev" }]
 
 # KV cache namespace. Replace `id` with the output of:
 #   npx wrangler kv namespace create ICON_CACHE
