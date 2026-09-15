@@ -21,9 +21,16 @@ export interface GitHubRelease {
 /** Minimal shape of the GitHub workflow-runs response (only the fields we use). */
 export interface GitHubWorkflowRuns {
   workflow_runs?: Array<{
+    /** The workflow display name configured via `name:` in the workflow YAML. */
+    name?: string | null;
     status?: string | null;
     conclusion?: string | null;
   }>;
+}
+
+/** Minimal shape of a single GitHub workflow (only the fields we use). */
+export interface GitHubWorkflow {
+  name?: string;
 }
 
 /** Minimal shape of the cfwidget mc-mods JSON response. */

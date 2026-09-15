@@ -1,4 +1,4 @@
-import type { CiStatus, Env, GitHubRelease, GitHubWorkflowRuns } from "../env";
+import type { CiStatus, Env, GitHubRelease, GitHubWorkflow, GitHubWorkflowRuns } from "../env";
 
 const API_BASE = "https://api.github.com";
 const MAX_RELEASE_PAGES = 10;
@@ -71,15 +71,39 @@ export async function getWorkflowStatus(
     `/repos/${owner}/${repo}/actions/workflows/${workflow}/runs?per_page=1`,
   );
   const run = data.workflow_runs?.[0];
+  // Prefer the display name configured via `name:` in the workflow YAML;
+  // every run carries it, so no extra request is needed in the common case.
+  const name = run?.name?.trim() || (await getWorkflowName(env, owner, repo, workflow));
   if (!run) {
-    return { name: workflow, status: "unknown", color: COLOR_UNKNOWN };
+    return { name, status: "unknown", color: COLOR_UNKNOWN };
   }
   if (run.conclusion === "success") {
-    return { name: workflow, status: "passing", color: COLOR_PASSING };
+    return { name, status: "passing", color: COLOR_PASSING };
   }
   if (run.conclusion && FAILURE_CONCLUSIONS.has(run.conclusion)) {
-    return { name: workflow, status: "failing", color: COLOR_FAILING };
+    return { name, status: "failing", color: COLOR_FAILING };
   }
   // No conclusion yet: queued / in_progress / waiting / pending ...
-  return { name: workflow, status: "running", color: COLOR_RUNNING };
+  return { name, status: "running", color: COLOR_RUNNING };
+}
+
+/**
+ * Fetch the display name of a workflow that has no runs yet.
+ * Falls back to the workflow file name when the lookup fails.
+ */
+async function getWorkflowName(
+  env: Env,
+  owner: string,
+  repo: string,
+  workflow: string,
+): Promise<string> {
+  try {
+    const data = await githubFetch<GitHubWorkflow>(
+      env,
+      `/repos/${owner}/${repo}/actions/workflows/${workflow}`,
+    );
+    return data.name?.trim() || workflow;
+  } catch {
+    return workflow;
+  }
 }
