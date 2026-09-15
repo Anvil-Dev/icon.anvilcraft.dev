@@ -3,7 +3,7 @@ import type { CiStatus, Env } from "./env";
 import * as curseforge from "./providers/curseforge";
 import * as github from "./providers/github";
 import * as modrinth from "./providers/modrinth";
-import { estimateTextWidth, formatNumber, render, templates, templateWidth, withWidth } from "./templates";
+import { formatNumber, measureTextWidth, render, templates, templateWidth, withWidth } from "./templates";
 
 /** Route parameters are restricted to characters safe for upstream APIs and XML output. */
 const PARAM_RE = /^[A-Za-z0-9._-]+$/;
@@ -132,8 +132,8 @@ const CI_PADDING_RIGHT = 16;
  * the status text) would overflow the template's default width.
  */
 function renderCi(status: CiStatus): string {
-  const titleWidth = estimateTextWidth(status.name, 16);
-  const statusWidth = estimateTextWidth(status.status, 17, true);
+  const titleWidth = measureTextWidth(status.name, 16, 500);
+  const statusWidth = measureTextWidth(status.status, 17, 800);
   const needed = Math.ceil(CI_TEXT_LEFT + Math.max(titleWidth, statusWidth) + CI_PADDING_RIGHT);
   const base = templateWidth(templates.githubCi) ?? needed;
   const template = withWidth(templates.githubCi, Math.max(base, needed));

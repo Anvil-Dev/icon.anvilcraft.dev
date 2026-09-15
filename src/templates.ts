@@ -2,6 +2,7 @@ import curseforgeDownloads from "../template/curseforge-downloads.svg";
 import githubCi from "../template/github-ci.svg";
 import githubDownloads from "../template/github-downloads.svg";
 import modrinthDownloads from "../template/modrinth-downloads.svg";
+import { INTER_ASCII_WIDTHS } from "./font-metrics";
 
 /** All available badge templates, imported as raw text via Wrangler's Text module rule. */
 export const templates = {
@@ -44,29 +45,24 @@ export function formatNumber(n: number): string {
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-/**
- * Approximate advance widths (fractions of 1em) for Inter, grouped by
- * character class. Good enough to size badges; no font metrics are available
- * in the Workers runtime.
- */
-const CHAR_WIDTHS: Array<[RegExp, number]> = [
-  [/\s/, 0.27],
-  [/[iljI.,:;'!|`]/, 0.3],
-  [/[tf()\[\]{}r]/, 0.36],
-  [/[mwMW@#%&]/, 0.86],
-  [/[A-Z]/, 0.68],
-  [/[0-9]/, 0.56],
-  [/[a-z]/, 0.53],
-];
-const DEFAULT_CHAR_WIDTH = 0.55;
+/** Font weights used by the badge templates, matching the metrics table. */
+export type BadgeFontWeight = 500 | 800;
 
-/** Estimate the rendered width in px of a text run in the Inter font. */
-export function estimateTextWidth(text: string, fontSize: number, bold = false): number {
+/** Fallback advance width for non-ASCII glyphs (e.g. CJK is roughly 1em). */
+const NON_ASCII_WIDTH = 1;
+
+/**
+ * Measure the rendered width in px of a text run using the exact Inter
+ * advance widths extracted at build time (see scripts/gen-font-metrics.mjs).
+ */
+export function measureTextWidth(text: string, fontSize: number, weight: BadgeFontWeight): number {
+  const widths = INTER_ASCII_WIDTHS[weight];
   let ems = 0;
   for (const ch of text) {
-    ems += CHAR_WIDTHS.find(([re]) => re.test(ch))?.[1] ?? DEFAULT_CHAR_WIDTH;
+    const code = ch.charCodeAt(0);
+    ems += code >= 32 && code <= 126 ? widths[code - 32] : NON_ASCII_WIDTH;
   }
-  return ems * fontSize * (bold ? 1.04 : 1);
+  return ems * fontSize;
 }
 
 /**
