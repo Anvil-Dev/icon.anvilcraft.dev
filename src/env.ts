@@ -54,3 +54,9 @@ export interface CiStatus {
   status: string;
   color: string;
 }
+
+/** One colored count segment of a multi-state badge (e.g. open/completed/not planned). */
+export interface CountSegment {
+  text: string;
+  color: string;
+}

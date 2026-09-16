@@ -1,5 +1,5 @@
 import { CI_TTL, DOWNLOADS_TTL, readCache, writeCache } from "./cache";
-import type { CiStatus, Env } from "./env";
+import type { CiStatus, CountSegment, Env } from "./env";
 import { CURSEFORGE_ICON, GITHUB_ICON, MODRINTH_ICON } from "./icons";
 import * as curseforge from "./providers/curseforge";
 import * as github from "./providers/github";
@@ -112,25 +112,35 @@ export default {
 
     if (kind === "issues" && provider === "github" && params.length === 2) {
       const [owner, repo] = params;
-      return downloadsBadge(env, ctx, style, {
+      return statesBadge(env, ctx, style, {
         cacheKey: `github:issues:${owner}/${repo}`,
         template: templates.githubIssues,
         visual: GITHUB_BADGE("GitHub Issues", "#3FB950"),
-        valueKey: "count",
-        format: (n) => `${formatNumber(n)} open`,
-        fetch: () => github.getOpenIssueCount(env, owner, repo),
+        fetch: async () => {
+          const s = await github.getIssueStates(env, owner, repo);
+          return [
+            { text: formatNumber(s.open), color: "#3FB950" },
+            { text: formatNumber(s.completed), color: "#A371F7" },
+            { text: formatNumber(s.notPlanned), color: "#9F9F9F" },
+          ];
+        },
       });
     }
 
     if (kind === "prs" && provider === "github" && params.length === 2) {
       const [owner, repo] = params;
-      return downloadsBadge(env, ctx, style, {
+      return statesBadge(env, ctx, style, {
         cacheKey: `github:prs:${owner}/${repo}`,
         template: templates.githubPrs,
         visual: GITHUB_BADGE("GitHub PRs", "#A371F7"),
-        valueKey: "count",
-        format: (n) => `${formatNumber(n)} open`,
-        fetch: () => github.getOpenPullRequestCount(env, owner, repo),
+        fetch: async () => {
+          const s = await github.getPrStates(env, owner, repo);
+          return [
+            { text: formatNumber(s.open), color: "#3FB950" },
+            { text: formatNumber(s.merged), color: "#A371F7" },
+            { text: formatNumber(s.closed), color: "#F85149" },
+          ];
+        },
       });
     }
 
@@ -227,6 +237,89 @@ function renderCounter(
   return render(sizedTemplate(opts.template, opts.visual.title, text), { [valueKey]: text });
 }
 
+interface StatesBadgeOptions {
+  cacheKey: string;
+  template: string;
+  visual: BadgeVisual;
+  fetch: () => Promise<CountSegment[]>;
+}
+
+/**
+ * Render a multi-state counter badge (e.g. open/completed/not planned).
+ * Segments are cached in KV for DOWNLOADS_TTL; on an upstream failure without
+ * a cached value we still serve a valid SVG showing "N/A".
+ */
+async function statesBadge(
+  env: Env,
+  ctx: ExecutionContext,
+  style: BadgeStyle,
+  opts: StatesBadgeOptions,
+): Promise<Response> {
+  let segments = await readCache<CountSegment[]>(env.ICON_CACHE, opts.cacheKey);
+  // Older cache entries stored a bare number; discard them and refetch.
+  if (segments !== null && !Array.isArray(segments)) segments = null;
+
+  if (segments === null) {
+    try {
+      segments = await opts.fetch();
+      ctx.waitUntil(writeCache(env.ICON_CACHE, opts.cacheKey, segments, DOWNLOADS_TTL));
+    } catch (error) {
+      console.error(opts.cacheKey, error);
+      return svgResponse(renderStates(opts, style, [{ text: "N/A", color: "#9F9F9F" }]), 0);
+    }
+  }
+
+  return svgResponse(renderStates(opts, style, segments), DOWNLOADS_TTL);
+}
+
+/** Join colored count segments with white " / " separators into tspan markup. */
+function stateTspans(segments: CountSegment[], fontSize: number, firstAttrs = ""): string {
+  return segments
+    .map((s, i) => {
+      const sep =
+        i === 0
+          ? ""
+          : `<tspan fill="#FFFFFF" font-size="${fontSize}" font-weight="800"> / </tspan>`;
+      const attrs = i === 0 && firstAttrs !== "" ? ` ${firstAttrs}` : "";
+      return (
+        `${sep}<tspan fill="${s.color}" font-size="${fontSize}" font-weight="800"${attrs}>` +
+        `${escapeXml(s.text)}</tspan>`
+      );
+    })
+    .join("");
+}
+
+/** Measured width of joined segments at the given font. */
+function measureSegments(segments: CountSegment[], fontSize: number): number {
+  const values = segments.reduce((w, s) => w + measureTextWidth(s.text, fontSize, 800), 0);
+  const separators = segments.length > 1 ? (segments.length - 1) * measureTextWidth(" / ", fontSize, 800) : 0;
+  return values + separators;
+}
+
+/** Render state segments in the requested style. */
+function renderStates(opts: StatesBadgeOptions, style: BadgeStyle, segments: CountSegment[]): string {
+  if (style === "minimal") {
+    return renderMinimal({
+      iconGroup: minimalIcon(opts.visual.icon),
+      title: opts.visual.title,
+      subtitle: "",
+      subtitleSegments: segments,
+      titleColor: opts.visual.titleColor,
+      subtitleColor: "#FFFFFF",
+      startColor: opts.visual.startColor,
+      endColor: opts.visual.endColor,
+    });
+  }
+  const subtitleLine =
+    `<text transform="translate(60 28.5)" fill="#FFFFFF" style="white-space: pre" xml:space="preserve" ` +
+    `font-family="Inter" font-size="17" font-weight="800" letter-spacing="0em">` +
+    stateTspans(segments, 17, 'x="0" y="15.1818"') +
+    `</text>`;
+  const valueText = segments.map((s) => s.text).join(" / ");
+  const template = sizedTemplate(opts.template, opts.visual.title, valueText);
+  return render(template, { subtitle_line: subtitleLine }, ["subtitle_line"]);
+}
+
 /**
  * Grow the template when the value text would overflow the card. The badge
  * title is baked into each template, so it is measured from the visual
@@ -316,6 +409,8 @@ interface MinimalVars {
   iconGroup: string;
   title: string;
   subtitle: string;
+  /** Colored count segments; when present they replace `subtitle`. */
+  subtitleSegments?: CountSegment[];
   titleColor: string;
   subtitleColor: string;
   startColor: string;
@@ -330,11 +425,16 @@ function minimalIcon(icon40: string): string {
 /** Render the minimal single-line template, sizing the card to the measured text. */
 function renderMinimal(vars: MinimalVars): string {
   const hasIcon = vars.iconGroup !== "";
-  const hasSubtitle = vars.subtitle !== "";
+  const segments = vars.subtitleSegments;
+  const hasSubtitle = segments ? segments.length > 0 : vars.subtitle !== "";
   const textLeft = hasIcon ? MINIMAL_TEXT_LEFT_ICON : MINIMAL_TEXT_LEFT_PLAIN;
 
   const titleWidth = measureTextWidth(vars.title, MINIMAL_TITLE_SIZE, 500);
-  const subtitleWidth = hasSubtitle ? measureTextWidth(vars.subtitle, MINIMAL_SUBTITLE_SIZE, 800) : 0;
+  const subtitleWidth = segments
+    ? measureSegments(segments, MINIMAL_SUBTITLE_SIZE)
+    : hasSubtitle
+      ? measureTextWidth(vars.subtitle, MINIMAL_SUBTITLE_SIZE, 800)
+      : 0;
   const needed = Math.ceil(
     textLeft + titleWidth + (hasSubtitle ? MINIMAL_GAP + subtitleWidth : 0) + MINIMAL_PADDING_RIGHT,
   );
@@ -344,10 +444,12 @@ function renderMinimal(vars: MinimalVars): string {
   const filterX = textLeft - 2.8;
   const filterWidth = finalWidth - filterX - 3.2;
 
-  const subtitleTspan = hasSubtitle
-    ? `<tspan dx="${MINIMAL_GAP}" fill="${vars.subtitleColor}" font-size="${MINIMAL_SUBTITLE_SIZE}" ` +
-      `font-weight="800">${escapeXml(vars.subtitle)}</tspan>`
-    : "";
+  const subtitleTspan = segments
+    ? stateTspans(segments, MINIMAL_SUBTITLE_SIZE, `dx="${MINIMAL_GAP}"`)
+    : hasSubtitle
+      ? `<tspan dx="${MINIMAL_GAP}" fill="${vars.subtitleColor}" font-size="${MINIMAL_SUBTITLE_SIZE}" ` +
+        `font-weight="800">${escapeXml(vars.subtitle)}</tspan>`
+      : "";
 
   return render(
     template,

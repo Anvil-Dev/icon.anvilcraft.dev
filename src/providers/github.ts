@@ -60,27 +60,44 @@ export async function getRepoDownloads(env: Env, owner: string, repo: string): P
   return total;
 }
 
-/** Count the open issues of a repository via the search API (excludes PRs). */
-export async function getOpenIssueCount(env: Env, owner: string, repo: string): Promise<number> {
-  return searchOpenCount(env, owner, repo, "issue");
+/** Issue counts by state: open, closed as completed, closed as not planned. */
+export interface IssueStates {
+  open: number;
+  completed: number;
+  notPlanned: number;
 }
 
-/** Count the open pull requests of a repository via the search API. */
-export async function getOpenPullRequestCount(
-  env: Env,
-  owner: string,
-  repo: string,
-): Promise<number> {
-  return searchOpenCount(env, owner, repo, "pr");
+/** Pull request counts by state: open, merged, closed without merging. */
+export interface PrStates {
+  open: number;
+  merged: number;
+  closed: number;
 }
 
-async function searchOpenCount(
-  env: Env,
-  owner: string,
-  repo: string,
-  type: "issue" | "pr",
-): Promise<number> {
-  const q = encodeURIComponent(`repo:${owner}/${repo} type:${type} state:open`);
+/** Fetch the issue state counts of a repository via the search API. */
+export async function getIssueStates(env: Env, owner: string, repo: string): Promise<IssueStates> {
+  const base = `repo:${owner}/${repo} type:issue`;
+  const [open, completed, notPlanned] = await Promise.all([
+    searchCount(env, `${base} state:open`),
+    searchCount(env, `${base} state:closed reason:completed`),
+    searchCount(env, `${base} state:closed reason:not_planned`),
+  ]);
+  return { open, completed, notPlanned };
+}
+
+/** Fetch the pull request state counts of a repository via the search API. */
+export async function getPrStates(env: Env, owner: string, repo: string): Promise<PrStates> {
+  const base = `repo:${owner}/${repo} type:pr`;
+  const [open, merged, closed] = await Promise.all([
+    searchCount(env, `${base} state:open`),
+    searchCount(env, `${base} is:merged`),
+    searchCount(env, `${base} state:closed is:unmerged`),
+  ]);
+  return { open, merged, closed };
+}
+
+async function searchCount(env: Env, query: string): Promise<number> {
+  const q = encodeURIComponent(query);
   // per_page=1 keeps the payload tiny; only total_count matters. The search
   // rate limit is stricter than core REST, which the 3h KV cache absorbs.
   const data = await githubFetch<GitHubSearchResult>(env, `/search/issues?q=${q}&per_page=1`);
