@@ -33,6 +33,19 @@ Examples (the AnvilCraft project):
 ![CI Status](https://icon.anvilcraft.dev/github/workflow/Anvil-Dev/AnvilCraft/ci.yml)
 ```
 
+### Badge styles
+
+Every badge endpoint accepts an optional `style` query parameter:
+
+| Value | Layout |
+| --- | --- |
+| `default` (fallback) | Two lines (title over subtitle), 40px icon |
+| `minimal` | Single line (title + subtitle with a gap), 20px icon |
+
+```markdown
+![GitHub Issues](https://icon.anvilcraft.dev/github/issues/Anvil-Dev/AnvilCraft?style=minimal)
+```
+
 ### Custom badges
 
 `/custom` renders a fully parameterized badge (no upstream account data):

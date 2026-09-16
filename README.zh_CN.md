@@ -33,6 +33,19 @@
 ![CI Status](https://icon.anvilcraft.dev/github/workflow/Anvil-Dev/AnvilCraft/ci.yml)
 ```
 
+### 徽章样式
+
+所有徽章端点都支持可选的 `style` 查询参数：
+
+| 取值 | 布局 |
+| --- | --- |
+| `default`（缺省） | 双行（标题在上、副标题在下），40px 图标 |
+| `minimal` | 单行（标题 + 间隙 + 副标题），20px 图标 |
+
+```markdown
+![GitHub Issues](https://icon.anvilcraft.dev/github/issues/Anvil-Dev/AnvilCraft?style=minimal)
+```
+
 ### 自定义徽章
 
 `/custom` 渲染完全由参数决定的徽章（不依赖任何上游账户数据）：
