@@ -40,10 +40,10 @@ Every badge endpoint accepts an optional `style` query parameter:
 | Value | Layout |
 | --- | --- |
 | `default` (fallback) | 56px high, two lines (title over subtitle), 40px icon |
-| `minimal` | 28px high, single line (title + subtitle with a gap), 20px icon |
+| `compact` | 40px high, single line (title + subtitle with a gap), 28px icon |
 
 ```markdown
-![GitHub Issues](https://icon.anvilcraft.dev/github/issues/Anvil-Dev/AnvilCraft?style=minimal)
+![GitHub Issues](https://icon.anvilcraft.dev/github/issues/Anvil-Dev/AnvilCraft?style=compact)
 ```
 
 ### Custom badges

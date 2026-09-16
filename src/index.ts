@@ -11,13 +11,13 @@ import { escapeXml, formatNumber, measureTextWidth, render, templates, templateW
 const PARAM_RE = /^[A-Za-z0-9._-]+$/;
 
 /** Badge layout styles selectable via the `style` query parameter. */
-type BadgeStyle = "default" | "minimal";
-const STYLES = new Set<string>(["default", "minimal"]);
+type BadgeStyle = "default" | "compact";
+const STYLES = new Set<string>(["default", "compact"]);
 
 function parseStyle(query: URLSearchParams): BadgeStyle {
   const raw = query.get("style") ?? "default";
   if (!STYLES.has(raw)) {
-    throw new InvalidParamError(`Invalid style: ${raw} (allowed: default, minimal)`);
+    throw new InvalidParamError(`Invalid style: ${raw} (allowed: default, compact)`);
   }
   return raw as BadgeStyle;
 }
@@ -37,8 +37,8 @@ Endpoints:
 
 Example: /github/downloads/Anvil-Dev/AnvilCraft
 
-All badge endpoints accept ?style=default (two lines, 40px icon) or
-?style=minimal (one line, 20px icon).
+All badge endpoints accept ?style=default (56px, two lines, 40px icon) or
+?style=compact (40px, one line, 28px icon).
 `;
 
 export default {
@@ -223,9 +223,9 @@ function renderCounter(
   valueKey: string,
   text: string,
 ): string {
-  if (style === "minimal") {
-    return renderMinimal({
-      iconGroup: minimalIcon(opts.visual.icon),
+  if (style === "compact") {
+    return renderCompact({
+      iconGroup: compactIcon(opts.visual.icon),
       title: opts.visual.title,
       subtitle: text,
       titleColor: opts.visual.titleColor,
@@ -298,9 +298,9 @@ function measureSegments(segments: CountSegment[], fontSize: number): number {
 
 /** Render state segments in the requested style. */
 function renderStates(opts: StatesBadgeOptions, style: BadgeStyle, segments: CountSegment[]): string {
-  if (style === "minimal") {
-    return renderMinimal({
-      iconGroup: minimalIcon(opts.visual.icon),
+  if (style === "compact") {
+    return renderCompact({
+      iconGroup: compactIcon(opts.visual.icon),
       title: opts.visual.title,
       subtitle: "",
       subtitleSegments: segments,
@@ -360,9 +360,9 @@ async function ciBadge(
 
 /** Render a CI status in the requested style. */
 function renderCiBadge(status: CiStatus, style: BadgeStyle): string {
-  if (style === "minimal") {
-    return renderMinimal({
-      iconGroup: minimalIcon(GITHUB_ICON),
+  if (style === "compact") {
+    return renderCompact({
+      iconGroup: compactIcon(GITHUB_ICON),
       title: status.name,
       subtitle: status.status,
       titleColor: "#E8E8E8",
@@ -395,16 +395,16 @@ function renderCi(status: CiStatus): string {
   });
 }
 
-/** Minimal layout: 28px-high card, icon at (6,4) sized 20x20, single text line. */
-const MINIMAL_TEXT_LEFT_ICON = 32;
-const MINIMAL_TEXT_LEFT_PLAIN = 10;
-const MINIMAL_GAP = 6;
-const MINIMAL_PADDING_RIGHT = 10;
-const MINIMAL_TITLE_SIZE = 12;
-const MINIMAL_SUBTITLE_SIZE = 13;
-const MINIMAL_MIN_WIDTH = 64;
+/** Compact layout: 40px-high card, icon at (10,6) sized 28x28, single text line. */
+const COMPACT_TEXT_LEFT_ICON = 43;
+const COMPACT_TEXT_LEFT_PLAIN = 12;
+const COMPACT_GAP = 6;
+const COMPACT_PADDING_RIGHT = 12;
+const COMPACT_TITLE_SIZE = 16;
+const COMPACT_SUBTITLE_SIZE = 16;
+const COMPACT_MIN_WIDTH = 64;
 
-interface MinimalVars {
+interface CompactVars {
   /** Pre-built icon markup (already positioned), or "" for no icon. */
   iconGroup: string;
   title: string;
@@ -417,37 +417,37 @@ interface MinimalVars {
   endColor: string;
 }
 
-/** Map a 40x40-space icon (template icon box at (12,8)) onto the 20x20 minimal box at (6,4). */
-function minimalIcon(icon40: string): string {
-  return icon40 === "" ? "" : `<g transform="scale(0.5)">${icon40}</g>`;
+/** Map a 40x40-space icon (template icon box at (12,8)) onto the 28x28 compact box at (10,6). */
+function compactIcon(icon40: string): string {
+  return icon40 === "" ? "" : `<g transform="translate(1.6 0.4) scale(0.7)">${icon40}</g>`;
 }
 
-/** Render the minimal single-line template, sizing the card to the measured text. */
-function renderMinimal(vars: MinimalVars): string {
+/** Render the Compact single-line template, sizing the card to the measured text. */
+function renderCompact(vars: CompactVars): string {
   const hasIcon = vars.iconGroup !== "";
   const segments = vars.subtitleSegments;
   const hasSubtitle = segments ? segments.length > 0 : vars.subtitle !== "";
-  const textLeft = hasIcon ? MINIMAL_TEXT_LEFT_ICON : MINIMAL_TEXT_LEFT_PLAIN;
+  const textLeft = hasIcon ? COMPACT_TEXT_LEFT_ICON : COMPACT_TEXT_LEFT_PLAIN;
 
-  const titleWidth = measureTextWidth(vars.title, MINIMAL_TITLE_SIZE, 500);
+  const titleWidth = measureTextWidth(vars.title, COMPACT_TITLE_SIZE, 500);
   const subtitleWidth = segments
-    ? measureSegments(segments, MINIMAL_SUBTITLE_SIZE)
+    ? measureSegments(segments, COMPACT_SUBTITLE_SIZE)
     : hasSubtitle
-      ? measureTextWidth(vars.subtitle, MINIMAL_SUBTITLE_SIZE, 800)
+      ? measureTextWidth(vars.subtitle, COMPACT_SUBTITLE_SIZE, 800)
       : 0;
   const needed = Math.ceil(
-    textLeft + titleWidth + (hasSubtitle ? MINIMAL_GAP + subtitleWidth : 0) + MINIMAL_PADDING_RIGHT,
+    textLeft + titleWidth + (hasSubtitle ? COMPACT_GAP + subtitleWidth : 0) + COMPACT_PADDING_RIGHT,
   );
-  const finalWidth = Math.max(MINIMAL_MIN_WIDTH, needed);
-  const template = withWidth(templates.minimal, finalWidth);
+  const finalWidth = Math.max(COMPACT_MIN_WIDTH, needed);
+  const template = withWidth(templates.compact, finalWidth);
 
-  const filterX = textLeft - 2.8;
-  const filterWidth = finalWidth - filterX - 3.2;
+  const filterX = textLeft - 4;
+  const filterWidth = finalWidth - filterX - 5;
 
   const subtitleTspan = segments
-    ? stateTspans(segments, MINIMAL_SUBTITLE_SIZE, `dx="${MINIMAL_GAP}"`)
+    ? stateTspans(segments, COMPACT_SUBTITLE_SIZE, `dx="${COMPACT_GAP}"`)
     : hasSubtitle
-      ? `<tspan dx="${MINIMAL_GAP}" fill="${vars.subtitleColor}" font-size="${MINIMAL_SUBTITLE_SIZE}" ` +
+      ? `<tspan dx="${COMPACT_GAP}" fill="${vars.subtitleColor}" font-size="${COMPACT_SUBTITLE_SIZE}" ` +
         `font-weight="800">${escapeXml(vars.subtitle)}</tspan>`
       : "";
 
@@ -556,12 +556,12 @@ interface CustomBadgeVars {
 
 /** Render a custom badge in the requested style. */
 function renderCustomBadge(style: BadgeStyle, vars: CustomBadgeVars): string {
-  if (style === "minimal") {
-    return renderMinimal({
+  if (style === "compact") {
+    return renderCompact({
       iconGroup:
         vars.iconPath === ""
           ? ""
-          : `<path d="${vars.iconPath}" fill="#${vars.iconColor}" transform="translate(6 4) scale(0.8333333)"/>`,
+          : `<path d="${vars.iconPath}" fill="#${vars.iconColor}" transform="translate(10 6) scale(1.1666667)"/>`,
       title: vars.title,
       subtitle: vars.subtitle,
       titleColor: `#${vars.titleColor}`,
