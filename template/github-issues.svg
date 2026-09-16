@@ -6,7 +6,7 @@
 </g>
 <g filter="url(#filter0_d_36_3)">
 <text transform="translate(60 9.5)" fill="#E8E8E8" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" font-weight="500" letter-spacing="0em"><tspan x="0" y="15.3182">GitHub Issues</tspan></text>
-<text transform="translate(60 28.5)" fill="white" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="17" font-weight="800" letter-spacing="0em"><tspan x="0" y="15.1818">${count}</tspan></text>
+<text transform="translate(60 28.5)" fill="#3FB950" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="17" font-weight="800" letter-spacing="0em"><tspan x="0" y="15.1818">${count}</tspan></text>
 </g>
 <defs>
 <filter id="filter0_d_36_3" x="54.4" y="3.9" width="155.2" height="48.2" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
