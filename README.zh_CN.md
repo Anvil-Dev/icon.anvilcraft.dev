@@ -17,6 +17,8 @@
 | Modrinth 下载量 | `https://icon.anvilcraft.dev/modrinth/downloads/:slug` | Modrinth API v2 | 3 小时 |
 | CurseForge 下载量 | `https://icon.anvilcraft.dev/curseforge/downloads/:slug` | cfwidget / CurseForge 官方 API | 3 小时 |
 | GitHub 下载量 | `https://icon.anvilcraft.dev/github/downloads/:owner/:repo` | GitHub REST（release 资产） | 3 小时 |
+| GitHub open issues | `https://icon.anvilcraft.dev/github/issues/:owner/:repo` | GitHub 搜索 API | 3 小时 |
+| GitHub open PRs | `https://icon.anvilcraft.dev/github/prs/:owner/:repo` | GitHub 搜索 API | 3 小时 |
 | GitHub CI 状态 | `https://icon.anvilcraft.dev/github/workflow/:owner/:repo/:workflow` | GitHub REST（workflow runs） | 60 秒 |
 | 自定义徽章 | `https://icon.anvilcraft.dev/custom?title=...&subtitle=...&icon=...` | [simpleicons.org](https://simpleicons.org) | 24 小时 |
 
@@ -26,6 +28,8 @@
 ![Modrinth Downloads](https://icon.anvilcraft.dev/modrinth/downloads/AnvilCraft)
 ![CurseForge Downloads](https://icon.anvilcraft.dev/curseforge/downloads/AnvilCraft)
 ![GitHub Downloads](https://icon.anvilcraft.dev/github/downloads/Anvil-Dev/AnvilCraft)
+![GitHub Issues](https://icon.anvilcraft.dev/github/issues/Anvil-Dev/AnvilCraft)
+![GitHub PRs](https://icon.anvilcraft.dev/github/prs/Anvil-Dev/AnvilCraft)
 ![CI Status](https://icon.anvilcraft.dev/github/workflow/Anvil-Dev/AnvilCraft/ci.yml)
 ```
 
