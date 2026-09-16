@@ -33,6 +33,11 @@ export interface GitHubWorkflow {
   name?: string;
 }
 
+/** Minimal shape of the GitHub search API response (only the fields we use). */
+export interface GitHubSearchResult {
+  total_count?: number;
+}
+
 /** Minimal shape of the cfwidget mc-mods JSON response. */
 export interface CfWidgetProject {
   downloads?: { total?: number };

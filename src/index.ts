@@ -11,10 +11,14 @@ const PARAM_RE = /^[A-Za-z0-9._-]+$/;
 
 const INDEX_TEXT = `icon.anvilcraft.dev — dynamic SVG badges
 
+Documentation & source: https://github.com/Anvil-Dev/icon.anvilcraft.dev
+
 Endpoints:
   /modrinth/downloads/:slug            Modrinth downloads badge   (cached 3h)
   /curseforge/downloads/:slug          CurseForge downloads badge (cached 3h)
   /github/downloads/:owner/:repo       GitHub release downloads   (cached 3h)
+  /github/issues/:owner/:repo          GitHub open issues         (cached 3h)
+  /github/prs/:owner/:repo             GitHub open pull requests  (cached 3h)
   /github/workflow/:owner/:repo/:workflow    GitHub Actions CI status   (cached 60s)
   /custom?title=..&subtitle=..&icon=.....    Fully customizable badge   (cached 24h)
 
@@ -65,6 +69,30 @@ export default {
       });
     }
 
+    if (kind === "issues" && provider === "github" && params.length === 2) {
+      const [owner, repo] = params;
+      return downloadsBadge(env, ctx, {
+        cacheKey: `github:issues:${owner}/${repo}`,
+        template: templates.githubIssues,
+        title: "GitHub Issues",
+        valueKey: "count",
+        format: (n) => `${formatNumber(n)} open`,
+        fetch: () => github.getOpenIssueCount(env, owner, repo),
+      });
+    }
+
+    if (kind === "prs" && provider === "github" && params.length === 2) {
+      const [owner, repo] = params;
+      return downloadsBadge(env, ctx, {
+        cacheKey: `github:prs:${owner}/${repo}`,
+        template: templates.githubPrs,
+        title: "GitHub PRs",
+        valueKey: "count",
+        format: (n) => `${formatNumber(n)} open`,
+        fetch: () => github.getOpenPullRequestCount(env, owner, repo),
+      });
+    }
+
     if (kind === "workflow" && provider === "github" && params.length === 3) {
       const [owner, repo, workflow] = params;
       return ciBadge(env, ctx, owner, repo, workflow);
@@ -78,10 +106,16 @@ interface DownloadsBadgeOptions {
   cacheKey: string;
   template: string;
   fetch: () => Promise<number>;
+  /** Template placeholder receiving the formatted value; defaults to "downloads". */
+  valueKey?: string;
+  /** Custom value formatter; defaults to formatNumber (thousands separators). */
+  format?: (n: number) => string;
+  /** The badge title as baked into the template; enables adaptive card width. */
+  title?: string;
 }
 
 /**
- * Render a downloads badge. Values are cached in KV for DOWNLOADS_TTL; on an
+ * Render a counter badge. Values are cached in KV for DOWNLOADS_TTL; on an
  * upstream failure without a cached value we still serve a valid SVG showing
  * "N/A" so badges embedded in READMEs never break.
  */
@@ -90,19 +124,36 @@ async function downloadsBadge(
   ctx: ExecutionContext,
   opts: DownloadsBadgeOptions,
 ): Promise<Response> {
-  let downloads = await readCache<number>(env.ICON_CACHE, opts.cacheKey);
+  const valueKey = opts.valueKey ?? "downloads";
+  const format = opts.format ?? formatNumber;
+  let value = await readCache<number>(env.ICON_CACHE, opts.cacheKey);
 
-  if (downloads === null) {
+  if (value === null) {
     try {
-      downloads = await opts.fetch();
-      ctx.waitUntil(writeCache(env.ICON_CACHE, opts.cacheKey, downloads, DOWNLOADS_TTL));
+      value = await opts.fetch();
+      ctx.waitUntil(writeCache(env.ICON_CACHE, opts.cacheKey, value, DOWNLOADS_TTL));
     } catch (error) {
       console.error(opts.cacheKey, error);
-      return svgResponse(render(opts.template, { downloads: "N/A" }), 0);
+      return svgResponse(render(sizedTemplate(opts.template, opts.title, "N/A"), { [valueKey]: "N/A" }), 0);
     }
   }
 
-  return svgResponse(render(opts.template, { downloads: formatNumber(downloads) }), DOWNLOADS_TTL);
+  const text = format(value);
+  return svgResponse(render(sizedTemplate(opts.template, opts.title, text), { [valueKey]: text }), DOWNLOADS_TTL);
+}
+
+/**
+ * Grow the template when the value text would overflow the card. Only applies
+ * to badges that declare their baked-in title; fixed-width badges pass no
+ * title and are returned unchanged.
+ */
+function sizedTemplate(template: string, title: string | undefined, valueText: string): string {
+  if (title === undefined) return template;
+  const titleWidth = measureTextWidth(title, 16, 500);
+  const valueWidth = measureTextWidth(valueText, 17, 800);
+  const needed = Math.ceil(60 + Math.max(titleWidth, valueWidth) + 16);
+  const base = templateWidth(template) ?? needed;
+  return withWidth(template, Math.max(base, needed));
 }
 
 /** Render a GitHub Actions CI badge, cached for CI_TTL. */

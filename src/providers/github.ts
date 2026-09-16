@@ -1,4 +1,11 @@
-import type { CiStatus, Env, GitHubRelease, GitHubWorkflow, GitHubWorkflowRuns } from "../env";
+import type {
+  CiStatus,
+  Env,
+  GitHubRelease,
+  GitHubSearchResult,
+  GitHubWorkflow,
+  GitHubWorkflowRuns,
+} from "../env";
 
 const API_BASE = "https://api.github.com";
 const MAX_RELEASE_PAGES = 10;
@@ -51,6 +58,33 @@ export async function getRepoDownloads(env: Env, owner: string, repo: string): P
     if (releases.length < 100) break;
   }
   return total;
+}
+
+/** Count the open issues of a repository via the search API (excludes PRs). */
+export async function getOpenIssueCount(env: Env, owner: string, repo: string): Promise<number> {
+  return searchOpenCount(env, owner, repo, "issue");
+}
+
+/** Count the open pull requests of a repository via the search API. */
+export async function getOpenPullRequestCount(
+  env: Env,
+  owner: string,
+  repo: string,
+): Promise<number> {
+  return searchOpenCount(env, owner, repo, "pr");
+}
+
+async function searchOpenCount(
+  env: Env,
+  owner: string,
+  repo: string,
+  type: "issue" | "pr",
+): Promise<number> {
+  const q = encodeURIComponent(`repo:${owner}/${repo} type:${type} state:open`);
+  // per_page=1 keeps the payload tiny; only total_count matters. The search
+  // rate limit is stricter than core REST, which the 3h KV cache absorbs.
+  const data = await githubFetch<GitHubSearchResult>(env, `/search/issues?q=${q}&per_page=1`);
+  return data.total_count ?? 0;
 }
 
 const FAILURE_CONCLUSIONS = new Set(["failure", "cancelled", "timed_out", "action_required"]);

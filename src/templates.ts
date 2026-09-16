@@ -2,6 +2,8 @@ import curseforgeDownloads from "../template/curseforge-downloads.svg";
 import custom from "../template/custom.svg";
 import githubCi from "../template/github-ci.svg";
 import githubDownloads from "../template/github-downloads.svg";
+import githubIssues from "../template/github-issues.svg";
+import githubPrs from "../template/github-prs.svg";
 import modrinthDownloads from "../template/modrinth-downloads.svg";
 import { INTER_ASCII_WIDTHS } from "./font-metrics";
 
@@ -11,6 +13,8 @@ export const templates = {
   custom,
   githubCi,
   githubDownloads,
+  githubIssues,
+  githubPrs,
   modrinthDownloads,
 } as const;
 
