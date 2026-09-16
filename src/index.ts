@@ -1,5 +1,6 @@
 import { CI_TTL, DOWNLOADS_TTL, readCache, writeCache } from "./cache";
 import type { CiStatus, Env } from "./env";
+import { CURSEFORGE_ICON, GITHUB_ICON, MODRINTH_ICON } from "./icons";
 import * as curseforge from "./providers/curseforge";
 import * as github from "./providers/github";
 import * as modrinth from "./providers/modrinth";
@@ -8,6 +9,18 @@ import { escapeXml, formatNumber, measureTextWidth, render, templates, templateW
 
 /** Route parameters are restricted to characters safe for upstream APIs and XML output. */
 const PARAM_RE = /^[A-Za-z0-9._-]+$/;
+
+/** Badge layout styles selectable via the `style` query parameter. */
+type BadgeStyle = "default" | "minimal";
+const STYLES = new Set<string>(["default", "minimal"]);
+
+function parseStyle(query: URLSearchParams): BadgeStyle {
+  const raw = query.get("style") ?? "default";
+  if (!STYLES.has(raw)) {
+    throw new InvalidParamError(`Invalid style: ${raw} (allowed: default, minimal)`);
+  }
+  return raw as BadgeStyle;
+}
 
 const INDEX_TEXT = `icon.anvilcraft.dev — dynamic SVG badges
 
@@ -23,16 +36,27 @@ Endpoints:
   /custom?title=..&subtitle=..&icon=.....    Fully customizable badge   (cached 24h)
 
 Example: /github/downloads/Anvil-Dev/AnvilCraft
+
+All badge endpoints accept ?style=default (two lines, 40px icon) or
+?style=minimal (one line, 20px icon).
 `;
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    const segments = new URL(request.url).pathname.split("/").filter(Boolean);
+    const url = new URL(request.url);
+    const segments = url.pathname.split("/").filter(Boolean);
 
     if (segments.length === 0) {
       return new Response(INDEX_TEXT, {
         headers: { "Content-Type": "text/plain; charset=utf-8" },
       });
+    }
+
+    let style: BadgeStyle;
+    try {
+      style = parseStyle(url.searchParams);
+    } catch (error) {
+      return badRequest((error as Error).message);
     }
 
     const [provider, kind, ...params] = segments;
@@ -41,40 +65,57 @@ export default {
     }
 
     if (provider === "custom" && kind === undefined) {
-      return customBadge(env, ctx, new URL(request.url).searchParams);
+      return customBadge(env, ctx, url.searchParams, style);
     }
 
     if (kind === "downloads" && provider === "modrinth" && params.length === 1) {
-      return downloadsBadge(env, ctx, {
+      return downloadsBadge(env, ctx, style, {
         cacheKey: `modrinth:downloads:${params[0]}`,
         template: templates.modrinthDownloads,
+        visual: {
+          icon: MODRINTH_ICON,
+          title: "Modrinth Downloads",
+          titleColor: "#E8E8E8",
+          subtitleColor: "#00FF73",
+          startColor: "#072A12",
+          endColor: "#051D0C",
+        },
         fetch: () => modrinth.getProjectDownloads(env, params[0]),
       });
     }
 
     if (kind === "downloads" && provider === "curseforge" && params.length === 1) {
-      return downloadsBadge(env, ctx, {
+      return downloadsBadge(env, ctx, style, {
         cacheKey: `curseforge:downloads:${params[0]}`,
         template: templates.curseforgeDownloads,
+        visual: {
+          icon: CURSEFORGE_ICON,
+          title: "CurseForge Downloads",
+          titleColor: "#E8E8E8",
+          subtitleColor: "#F16436",
+          startColor: "#2C130B",
+          endColor: "#210D08",
+        },
         fetch: () => curseforge.getProjectDownloads(env, params[0]),
       });
     }
 
     if (kind === "downloads" && provider === "github" && params.length === 2) {
       const [owner, repo] = params;
-      return downloadsBadge(env, ctx, {
+      return downloadsBadge(env, ctx, style, {
         cacheKey: `github:downloads:${owner}/${repo}`,
         template: templates.githubDownloads,
+        visual: GITHUB_BADGE("GitHub Downloads", "#FFFFFF"),
         fetch: () => github.getRepoDownloads(env, owner, repo),
       });
     }
 
     if (kind === "issues" && provider === "github" && params.length === 2) {
       const [owner, repo] = params;
-      return downloadsBadge(env, ctx, {
+      return downloadsBadge(env, ctx, style, {
         cacheKey: `github:issues:${owner}/${repo}`,
         template: templates.githubIssues,
-        title: "GitHub Issues",
+        visual: GITHUB_BADGE("GitHub Issues", "#3FB950"),
         valueKey: "count",
         format: (n) => `${formatNumber(n)} open`,
         fetch: () => github.getOpenIssueCount(env, owner, repo),
@@ -83,10 +124,10 @@ export default {
 
     if (kind === "prs" && provider === "github" && params.length === 2) {
       const [owner, repo] = params;
-      return downloadsBadge(env, ctx, {
+      return downloadsBadge(env, ctx, style, {
         cacheKey: `github:prs:${owner}/${repo}`,
         template: templates.githubPrs,
-        title: "GitHub PRs",
+        visual: GITHUB_BADGE("GitHub PRs", "#A371F7"),
         valueKey: "count",
         format: (n) => `${formatNumber(n)} open`,
         fetch: () => github.getOpenPullRequestCount(env, owner, repo),
@@ -95,23 +136,45 @@ export default {
 
     if (kind === "workflow" && provider === "github" && params.length === 3) {
       const [owner, repo, workflow] = params;
-      return ciBadge(env, ctx, owner, repo, workflow);
+      return ciBadge(env, ctx, style, owner, repo, workflow);
     }
 
     return badRequest("Unknown endpoint. See / for the list of available badges.");
   },
 } satisfies ExportedHandler<Env>;
 
+/** Visual identity of a badge: icon, texts and colors shared by both styles. */
+interface BadgeVisual {
+  /** Icon markup in the templates' 40x40 icon space, or "" for no icon. */
+  icon: string;
+  title: string;
+  titleColor: string;
+  subtitleColor: string;
+  startColor: string;
+  endColor: string;
+}
+
+/** Visual shared by all GitHub badges; only title and subtitle color differ. */
+function GITHUB_BADGE(title: string, subtitleColor: string): BadgeVisual {
+  return {
+    icon: GITHUB_ICON,
+    title,
+    titleColor: "#E8E8E8",
+    subtitleColor,
+    startColor: "#202020",
+    endColor: "#000000",
+  };
+}
+
 interface DownloadsBadgeOptions {
   cacheKey: string;
   template: string;
+  visual: BadgeVisual;
   fetch: () => Promise<number>;
   /** Template placeholder receiving the formatted value; defaults to "downloads". */
   valueKey?: string;
   /** Custom value formatter; defaults to formatNumber (thousands separators). */
   format?: (n: number) => string;
-  /** The badge title as baked into the template; enables adaptive card width. */
-  title?: string;
 }
 
 /**
@@ -122,6 +185,7 @@ interface DownloadsBadgeOptions {
 async function downloadsBadge(
   env: Env,
   ctx: ExecutionContext,
+  style: BadgeStyle,
   opts: DownloadsBadgeOptions,
 ): Promise<Response> {
   const valueKey = opts.valueKey ?? "downloads";
@@ -134,21 +198,41 @@ async function downloadsBadge(
       ctx.waitUntil(writeCache(env.ICON_CACHE, opts.cacheKey, value, DOWNLOADS_TTL));
     } catch (error) {
       console.error(opts.cacheKey, error);
-      return svgResponse(render(sizedTemplate(opts.template, opts.title, "N/A"), { [valueKey]: "N/A" }), 0);
+      return svgResponse(renderCounter(opts, style, valueKey, "N/A"), 0);
     }
   }
 
   const text = format(value);
-  return svgResponse(render(sizedTemplate(opts.template, opts.title, text), { [valueKey]: text }), DOWNLOADS_TTL);
+  return svgResponse(renderCounter(opts, style, valueKey, text), DOWNLOADS_TTL);
+}
+
+/** Render a counter badge value in the requested style. */
+function renderCounter(
+  opts: DownloadsBadgeOptions,
+  style: BadgeStyle,
+  valueKey: string,
+  text: string,
+): string {
+  if (style === "minimal") {
+    return renderMinimal({
+      iconGroup: minimalIcon(opts.visual.icon),
+      title: opts.visual.title,
+      subtitle: text,
+      titleColor: opts.visual.titleColor,
+      subtitleColor: opts.visual.subtitleColor,
+      startColor: opts.visual.startColor,
+      endColor: opts.visual.endColor,
+    });
+  }
+  return render(sizedTemplate(opts.template, opts.visual.title, text), { [valueKey]: text });
 }
 
 /**
- * Grow the template when the value text would overflow the card. Only applies
- * to badges that declare their baked-in title; fixed-width badges pass no
- * title and are returned unchanged.
+ * Grow the template when the value text would overflow the card. The badge
+ * title is baked into each template, so it is measured from the visual
+ * declaration alongside the value text.
  */
-function sizedTemplate(template: string, title: string | undefined, valueText: string): string {
-  if (title === undefined) return template;
+function sizedTemplate(template: string, title: string, valueText: string): string {
   const titleWidth = measureTextWidth(title, 16, 500);
   const valueWidth = measureTextWidth(valueText, 17, 800);
   const needed = Math.ceil(60 + Math.max(titleWidth, valueWidth) + 16);
@@ -160,6 +244,7 @@ function sizedTemplate(template: string, title: string | undefined, valueText: s
 async function ciBadge(
   env: Env,
   ctx: ExecutionContext,
+  style: BadgeStyle,
   owner: string,
   repo: string,
   workflow: string,
@@ -173,11 +258,27 @@ async function ciBadge(
       ctx.waitUntil(writeCache(env.ICON_CACHE, cacheKey, status, CI_TTL));
     } catch (error) {
       console.error(cacheKey, error);
-      return svgResponse(renderCi({ name: workflow, status: "unknown", color: "#9F9F9F" }), 0);
+      return svgResponse(renderCiBadge({ name: workflow, status: "unknown", color: "#9F9F9F" }, style), 0);
     }
   }
 
-  return svgResponse(renderCi(status), CI_TTL);
+  return svgResponse(renderCiBadge(status, style), CI_TTL);
+}
+
+/** Render a CI status in the requested style. */
+function renderCiBadge(status: CiStatus, style: BadgeStyle): string {
+  if (style === "minimal") {
+    return renderMinimal({
+      iconGroup: minimalIcon(GITHUB_ICON),
+      title: status.name,
+      subtitle: status.status,
+      titleColor: "#E8E8E8",
+      subtitleColor: status.color,
+      startColor: "#202020",
+      endColor: "#000000",
+    });
+  }
+  return renderCi(status);
 }
 
 /** X offset of the text block inside the CI template, and the right padding. */
@@ -199,6 +300,67 @@ function renderCi(status: CiStatus): string {
     Status: status.status,
     status_color: status.color,
   });
+}
+
+/** Minimal layout: icon at (12,18) sized 20x20, single text line with a gap. */
+const MINIMAL_TEXT_LEFT_ICON = 40;
+const MINIMAL_TEXT_LEFT_PLAIN = 16;
+const MINIMAL_GAP = 8;
+
+interface MinimalVars {
+  /** Pre-built icon markup (already positioned), or "" for no icon. */
+  iconGroup: string;
+  title: string;
+  subtitle: string;
+  titleColor: string;
+  subtitleColor: string;
+  startColor: string;
+  endColor: string;
+}
+
+/** Map a 40x40-space icon (template icon box at (12,8)) onto the 20x20 minimal box at (12,18). */
+function minimalIcon(icon40: string): string {
+  return icon40 === "" ? "" : `<g transform="translate(6 14) scale(0.5)">${icon40}</g>`;
+}
+
+/** Render the minimal single-line template, sizing the card to the measured text. */
+function renderMinimal(vars: MinimalVars): string {
+  const hasIcon = vars.iconGroup !== "";
+  const hasSubtitle = vars.subtitle !== "";
+  const textLeft = hasIcon ? MINIMAL_TEXT_LEFT_ICON : MINIMAL_TEXT_LEFT_PLAIN;
+
+  const titleWidth = measureTextWidth(vars.title, 16, 500);
+  const subtitleWidth = hasSubtitle ? measureTextWidth(vars.subtitle, 17, 800) : 0;
+  const needed = Math.ceil(
+    textLeft + titleWidth + (hasSubtitle ? MINIMAL_GAP + subtitleWidth : 0) + 16,
+  );
+  const base = templateWidth(templates.minimal) ?? needed;
+  const finalWidth = Math.max(base, needed);
+  const template = withWidth(templates.minimal, finalWidth);
+
+  const filterX = textLeft - 5.6;
+  const filterWidth = finalWidth - filterX - 6.4;
+
+  const subtitleTspan = hasSubtitle
+    ? `<tspan dx="${MINIMAL_GAP}" fill="${vars.subtitleColor}" font-size="17" ` +
+      `font-weight="800">${escapeXml(vars.subtitle)}</tspan>`
+    : "";
+
+  return render(
+    template,
+    {
+      icon_group: vars.iconGroup,
+      text_left: String(textLeft),
+      title: vars.title,
+      title_color: vars.titleColor,
+      subtitle_tspan: subtitleTspan,
+      start_color: vars.startColor,
+      end_color: vars.endColor,
+      filter_x: String(Number(filterX.toFixed(2))),
+      filter_width: String(Number(filterWidth.toFixed(2))),
+    },
+    ["icon_group", "subtitle_tspan"],
+  );
 }
 
 /** Custom badges are immutable per URL, so they may be cached for a long time. */
@@ -228,6 +390,7 @@ async function customBadge(
   env: Env,
   ctx: ExecutionContext,
   query: URLSearchParams,
+  style: BadgeStyle,
 ): Promise<Response> {
   try {
     const title = cleanText(query.get("title"), "title", true);
@@ -242,28 +405,22 @@ async function customBadge(
       throw new InvalidParamError(`Invalid icon slug: ${iconSlug}`);
     }
 
-    let iconGroup = "";
+    let iconPath = "";
     let iconColor = cleanColor(query.get("iconColor"));
     if (iconSlug !== null) {
       try {
         const icon = await getIcon(env, ctx, iconSlug);
+        iconPath = icon.path;
         iconColor ??= icon.brandColor;
-        iconGroup =
-          `<g clip-path="url(#clip0_custom)">` +
-          `<path d="${icon.path}" fill="#${iconColor}" transform="translate(12 8) scale(1.6666667)"/>` +
-          `</g>`;
       } catch (error) {
         if (error instanceof UnknownIconError) throw new InvalidParamError(error.message);
         // Transient CDN failure: degrade to an icon-less badge served with no-cache.
         console.error(`custom:icon:${iconSlug}`, error);
-        return svgResponse(
-          renderCustom({ title, subtitle, titleColor, subtitleColor, startColor, endColor, iconColor: "FFFFFF", iconGroup: "" }),
-          0,
-        );
+        return svgResponse(renderCustomBadge(style, { title, subtitle, titleColor, subtitleColor, startColor, endColor, iconColor: "FFFFFF", iconPath: "" }), 0);
       }
     }
 
-    const svg = renderCustom({
+    const svg = renderCustomBadge(style, {
       title,
       subtitle,
       titleColor,
@@ -271,13 +428,44 @@ async function customBadge(
       startColor,
       endColor,
       iconColor: iconColor ?? "FFFFFF",
-      iconGroup,
+      iconPath,
     });
     return svgResponse(svg, CUSTOM_TTL);
   } catch (error) {
     if (error instanceof InvalidParamError) return badRequest(error.message);
     throw error;
   }
+}
+
+interface CustomBadgeVars {
+  title: string;
+  subtitle: string;
+  titleColor: string;
+  subtitleColor: string;
+  startColor: string;
+  endColor: string;
+  iconColor: string;
+  /** Raw simple-icons path data (24x24 viewBox), or "" for no icon. */
+  iconPath: string;
+}
+
+/** Render a custom badge in the requested style. */
+function renderCustomBadge(style: BadgeStyle, vars: CustomBadgeVars): string {
+  if (style === "minimal") {
+    return renderMinimal({
+      iconGroup:
+        vars.iconPath === ""
+          ? ""
+          : `<path d="${vars.iconPath}" fill="#${vars.iconColor}" transform="translate(12 18) scale(0.8333333)"/>`,
+      title: vars.title,
+      subtitle: vars.subtitle,
+      titleColor: `#${vars.titleColor}`,
+      subtitleColor: `#${vars.subtitleColor}`,
+      startColor: `#${vars.startColor}`,
+      endColor: `#${vars.endColor}`,
+    });
+  }
+  return renderCustom(vars);
 }
 
 /** Validate a title/subtitle parameter. */
@@ -302,28 +490,22 @@ function cleanColor(raw: string | null): string | null {
   return hex.toUpperCase();
 }
 
-interface CustomBadgeVars {
-  title: string;
-  subtitle: string;
-  titleColor: string;
-  subtitleColor: string;
-  startColor: string;
-  endColor: string;
-  iconColor: string;
-  /** Pre-built icon markup, or an empty string when the badge has no icon. */
-  iconGroup: string;
-}
-
 /** X offset of the text block, and the right padding of the custom badge. */
 const CUSTOM_TEXT_LEFT_ICON = 60;
 const CUSTOM_TEXT_LEFT_PLAIN = 16;
 const CUSTOM_PADDING_RIGHT = 16;
 
-/** Render the custom template, sizing the card to the measured text width. */
+/** Render the custom template in the default two-line style. */
 function renderCustom(vars: CustomBadgeVars): string {
-  const hasIcon = vars.iconGroup !== "";
+  const hasIcon = vars.iconPath !== "";
   const hasSubtitle = vars.subtitle !== "";
   const textLeft = hasIcon ? CUSTOM_TEXT_LEFT_ICON : CUSTOM_TEXT_LEFT_PLAIN;
+
+  const iconGroup = hasIcon
+    ? `<g clip-path="url(#clip0_custom)">` +
+      `<path d="${vars.iconPath}" fill="#${vars.iconColor}" transform="translate(12 8) scale(1.6666667)"/>` +
+      `</g>`
+    : "";
 
   const titleWidth = measureTextWidth(vars.title, 16, 500);
   const subtitleWidth = hasSubtitle ? measureTextWidth(vars.subtitle, 17, 800) : 0;
@@ -346,7 +528,7 @@ function renderCustom(vars: CustomBadgeVars): string {
   return render(
     template,
     {
-      icon_group: vars.iconGroup,
+      icon_group: iconGroup,
       text_left: String(textLeft),
       title_y: hasSubtitle ? "9.5" : "18",
       title: vars.title,

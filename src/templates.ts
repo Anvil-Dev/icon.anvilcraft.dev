@@ -4,6 +4,7 @@ import githubCi from "../template/github-ci.svg";
 import githubDownloads from "../template/github-downloads.svg";
 import githubIssues from "../template/github-issues.svg";
 import githubPrs from "../template/github-prs.svg";
+import minimal from "../template/minimal.svg";
 import modrinthDownloads from "../template/modrinth-downloads.svg";
 import { INTER_ASCII_WIDTHS } from "./font-metrics";
 
@@ -15,6 +16,7 @@ export const templates = {
   githubDownloads,
   githubIssues,
   githubPrs,
+  minimal,
   modrinthDownloads,
 } as const;
 
