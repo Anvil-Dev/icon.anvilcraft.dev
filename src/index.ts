@@ -302,10 +302,14 @@ function renderCi(status: CiStatus): string {
   });
 }
 
-/** Minimal layout: icon at (12,18) sized 20x20, single text line with a gap. */
-const MINIMAL_TEXT_LEFT_ICON = 40;
-const MINIMAL_TEXT_LEFT_PLAIN = 16;
-const MINIMAL_GAP = 8;
+/** Minimal layout: 28px-high card, icon at (6,4) sized 20x20, single text line. */
+const MINIMAL_TEXT_LEFT_ICON = 32;
+const MINIMAL_TEXT_LEFT_PLAIN = 10;
+const MINIMAL_GAP = 6;
+const MINIMAL_PADDING_RIGHT = 10;
+const MINIMAL_TITLE_SIZE = 12;
+const MINIMAL_SUBTITLE_SIZE = 13;
+const MINIMAL_MIN_WIDTH = 64;
 
 interface MinimalVars {
   /** Pre-built icon markup (already positioned), or "" for no icon. */
@@ -318,9 +322,9 @@ interface MinimalVars {
   endColor: string;
 }
 
-/** Map a 40x40-space icon (template icon box at (12,8)) onto the 20x20 minimal box at (12,18). */
+/** Map a 40x40-space icon (template icon box at (12,8)) onto the 20x20 minimal box at (6,4). */
 function minimalIcon(icon40: string): string {
-  return icon40 === "" ? "" : `<g transform="translate(6 14) scale(0.5)">${icon40}</g>`;
+  return icon40 === "" ? "" : `<g transform="scale(0.5)">${icon40}</g>`;
 }
 
 /** Render the minimal single-line template, sizing the card to the measured text. */
@@ -329,20 +333,19 @@ function renderMinimal(vars: MinimalVars): string {
   const hasSubtitle = vars.subtitle !== "";
   const textLeft = hasIcon ? MINIMAL_TEXT_LEFT_ICON : MINIMAL_TEXT_LEFT_PLAIN;
 
-  const titleWidth = measureTextWidth(vars.title, 16, 500);
-  const subtitleWidth = hasSubtitle ? measureTextWidth(vars.subtitle, 17, 800) : 0;
+  const titleWidth = measureTextWidth(vars.title, MINIMAL_TITLE_SIZE, 500);
+  const subtitleWidth = hasSubtitle ? measureTextWidth(vars.subtitle, MINIMAL_SUBTITLE_SIZE, 800) : 0;
   const needed = Math.ceil(
-    textLeft + titleWidth + (hasSubtitle ? MINIMAL_GAP + subtitleWidth : 0) + 16,
+    textLeft + titleWidth + (hasSubtitle ? MINIMAL_GAP + subtitleWidth : 0) + MINIMAL_PADDING_RIGHT,
   );
-  const base = templateWidth(templates.minimal) ?? needed;
-  const finalWidth = Math.max(base, needed);
+  const finalWidth = Math.max(MINIMAL_MIN_WIDTH, needed);
   const template = withWidth(templates.minimal, finalWidth);
 
-  const filterX = textLeft - 5.6;
-  const filterWidth = finalWidth - filterX - 6.4;
+  const filterX = textLeft - 2.8;
+  const filterWidth = finalWidth - filterX - 3.2;
 
   const subtitleTspan = hasSubtitle
-    ? `<tspan dx="${MINIMAL_GAP}" fill="${vars.subtitleColor}" font-size="17" ` +
+    ? `<tspan dx="${MINIMAL_GAP}" fill="${vars.subtitleColor}" font-size="${MINIMAL_SUBTITLE_SIZE}" ` +
       `font-weight="800">${escapeXml(vars.subtitle)}</tspan>`
     : "";
 
@@ -456,7 +459,7 @@ function renderCustomBadge(style: BadgeStyle, vars: CustomBadgeVars): string {
       iconGroup:
         vars.iconPath === ""
           ? ""
-          : `<path d="${vars.iconPath}" fill="#${vars.iconColor}" transform="translate(12 18) scale(0.8333333)"/>`,
+          : `<path d="${vars.iconPath}" fill="#${vars.iconColor}" transform="translate(6 4) scale(0.8333333)"/>`,
       title: vars.title,
       subtitle: vars.subtitle,
       titleColor: `#${vars.titleColor}`,

@@ -39,8 +39,8 @@ Every badge endpoint accepts an optional `style` query parameter:
 
 | Value | Layout |
 | --- | --- |
-| `default` (fallback) | Two lines (title over subtitle), 40px icon |
-| `minimal` | Single line (title + subtitle with a gap), 20px icon |
+| `default` (fallback) | 56px high, two lines (title over subtitle), 40px icon |
+| `minimal` | 28px high, single line (title + subtitle with a gap), 20px icon |
 
 ```markdown
 ![GitHub Issues](https://icon.anvilcraft.dev/github/issues/Anvil-Dev/AnvilCraft?style=minimal)

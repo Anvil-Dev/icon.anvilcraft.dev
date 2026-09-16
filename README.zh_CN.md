@@ -39,8 +39,8 @@
 
 | 取值 | 布局 |
 | --- | --- |
-| `default`（缺省） | 双行（标题在上、副标题在下），40px 图标 |
-| `minimal` | 单行（标题 + 间隙 + 副标题），20px 图标 |
+| `default`（缺省） | 56px 高，双行（标题在上、副标题在下），40px 图标 |
+| `minimal` | 28px 高，单行（标题 + 间隙 + 副标题），20px 图标 |
 
 ```markdown
 ![GitHub Issues](https://icon.anvilcraft.dev/github/issues/Anvil-Dev/AnvilCraft?style=minimal)

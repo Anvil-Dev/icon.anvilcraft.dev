@@ -101,11 +101,11 @@ export function withWidth(svg: string, newWidth: number): string {
       (_m, a: string, b: string, c: string) => `${a}${newWidth}${b}${newWidth}${c}`,
     )
     .replace(
-      /(<rect width=")[\d.]+(" height="\d+" rx="8")/,
+      /(<rect width=")[\d.]+(" height="\d+" rx="[\d.]+")/,
       (_m, a: string, b: string) => `${a}${newWidth}${b}`,
     )
     .replace(
-      /(<rect x="1\.05" y="1\.05" width=")([\d.]+)(")/,
+      /(<rect x="[\d.]+" y="[\d.]+" width=")([\d.]+)(" height="[\d.]+" rx="[\d.]+" stroke)/,
       (_m, a: string, n: string, b: string) => `${a}${shift(n, delta)}${b}`,
     )
     .replace(
